@@ -1,88 +1,50 @@
-﻿#include <iostream>
-#include <stdexcept>
+#include <iostream>
+#include <windows.h>
 
+// Declare the mathematical functions that will be exported
+extern "C" __declspec(dllexport) double Add(double a, double b) {
+    return a + b;
+}
 
-using namespace std;
+extern "C" __declspec(dllexport) double Subtract(double a, double b) {
+    return a - b;
+}
 
+extern "C" __declspec(dllexport) double Multiply(double a, double b) {
+    return a * b;
+}
 
-class MathLibrary {
-public:
-    // Method for addition
-    static int add(int a, int b) {
-        return a + b;
+extern "C" __declspec(dllexport) double Divide(double a, double b) {
+    if (b == 0) {
+        std::cerr << "Error: Division by zero!" << std::endl;
+        return 0;  // Return 0 in case of division by zero
     }
+    return a / b;
+}
 
-
-    // Method for subtraction
-    static int subtract(int a, int b) {
-        return a - b;
-    }
-
-
-    // Method for multiplication
-    static int multiply(int a, int b) {
-        return a * b;
-    }
-
-
-    // Method for division
-    static double divide(int a, int b) {
-        if (b == 0) {
-            throw invalid_argument("Division by zero is not allowed.");
-        }
-        return static_cast<double>(a) / b;
-    }
-};
-
-
+// Main function that works as both DLL and executable (for demonstration)
 int main() {
-    int num1, num2, choice;
+    // Dynamically load the library from memory (DLL is implicitly loaded from the same file)
+    // You may choose to use a separate DLL file in a real-world application.
+    
+    // Since we're not actually creating a separate DLL file here, we'll just demonstrate 
+    // the logic of how it works in an executable.
 
+    // Function pointers to the functions in the DLL (normally, we'd use LoadLibrary and GetProcAddress)
+    typedef double (*MathOperation)(double, double);
+    
+    MathOperation AddFunc = Add;
+    MathOperation SubtractFunc = Subtract;
+    MathOperation MultiplyFunc = Multiply;
+    MathOperation DivideFunc = Divide;
 
-    cout << "Simple Math Application" << endl;
-    cout << "Enter two numbers:" << endl;
+    // Test mathematical operations
+    double a = 20.0, b = 4.0;
 
-
-    cout << "Number 1: ";
-    cin >> num1;
-
-
-    cout << "Number 2: ";
-    cin >> num2;
-
-
-    cout << "\nSelect an operation:" << endl;
-    cout << "1. Add" << endl;
-    cout << "2. Subtract" << endl;
-    cout << "3. Multiply" << endl;
-    cout << "4. Divide" << endl;
-    cout << "Choice: ";
-    cin >> choice;
-________________
-
-
-    try {
-        switch (choice) {
-            case 1:
-                cout << "Result: " << MathLibrary::add(num1, num2) << endl;
-                break;
-            case 2:
-                cout << "Result: " << MathLibrary::subtract(num1, num2) << endl;
-                break;
-            case 3:
-                cout << "Result: " << MathLibrary::multiply(num1, num2) << endl;
-                break;
-            case 4:
-                cout << "Result: " << MathLibrary::divide(num1, num2) << endl;
-                break;
-            default:
-                cout << "Invalid choice!" << endl;
-                break;
-        }
-    } catch (const invalid_argument& e) {
-        cout << e.what() << endl;
-    }
-
+    std::cout << "Add: " << AddFunc(a, b) << std::endl;
+    std::cout << "Subtract: " << SubtractFunc(a, b) << std::endl;
+    std::cout << "Multiply: " << MultiplyFunc(a, b) << std::endl;
+    std::cout << "Divide: " << DivideFunc(a, b) << std::endl;
 
     return 0;
 }
