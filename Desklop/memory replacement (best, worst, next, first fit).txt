@@ -1,0 +1,86 @@
+﻿def display(processes, blockSize, allocation):
+    print("\nProcess No.\tProcess Size\tBlock no.")
+    for i, process in enumerate(processes):
+        print(f"{i + 1}\t\t{process}\t\t", end="")
+        if allocation[i] != -1:
+            print(f"{allocation[i] + 1}")
+        else:
+            print("Not Allocated")
+    print("\nBlock Sizes:", blockSize)
+
+
+def first_fit(blockSize, processSize):
+    allocation = [-1] * len(processSize)
+    for i in range(len(processSize)):
+        for j in range(len(blockSize)):
+            if blockSize[j] >= processSize[i]:
+                allocation[i] = j
+                blockSize[j] -= processSize[i]
+                break
+    display(processSize, blockSize, allocation)
+
+
+def next_fit(blockSize, processSize):
+    allocation = [-1] * len(processSize)
+    j = 0
+    for i in range(len(processSize)):
+        count = 0  # To prevent infinite looping
+        while count < len(blockSize):
+            if blockSize[j] >= processSize[i]:
+                allocation[i] = j
+                blockSize[j] -= processSize[i]
+                break
+            j = (j + 1) % len(blockSize)
+            count += 1
+    display(processSize, blockSize, allocation)
+
+
+def worst_fit(blockSize, processSize):
+    allocation = [-1] * len(processSize)
+    for i in range(len(processSize)):
+        wstIdx = -1
+        for j in range(len(blockSize)):
+            if blockSize[j] >= processSize[i]:
+                if wstIdx == -1 or blockSize[j] > blockSize[wstIdx]:
+                    wstIdx = j
+        if wstIdx != -1:
+            allocation[i] = wstIdx
+            blockSize[wstIdx] -= processSize[i]
+    display(processSize, blockSize, allocation)
+
+
+def best_fit(blockSize, processSize):
+    allocation = [-1] * len(processSize)
+    for i in range(len(processSize)):
+        bestIdx = -1
+        for j in range(len(blockSize)):
+            if blockSize[j] >= processSize[i]:
+                if bestIdx == -1 or blockSize[j] < blockSize[bestIdx]:
+                    bestIdx = j
+        if bestIdx != -1:
+            allocation[i] = bestIdx
+            blockSize[bestIdx] -= processSize[i]
+    display(processSize, blockSize, allocation)
+
+
+if __name__ == "__main__":
+    blockSize = [100, 500, 200, 300, 600]
+    processSize = [212, 417, 112, 426]
+
+
+    print("Choose a memory placement strategy:")
+    print("1. First-Fit\n2. Next-Fit\n3. Worst-Fit\n4. Best-Fit")
+    choice = int(input("Enter your choice: "))
+________________
+
+
+    if choice == 1:
+        first_fit(blockSize.copy(), processSize)
+    elif choice == 2:
+        next_fit(blockSize.copy(), processSize)
+    elif choice == 3:
+        worst_fit(blockSize.copy(), processSize)
+    elif choice == 4:
+        best_fit(blockSize.copy(), processSize)
+    else:
+        print("Invalid choice.")

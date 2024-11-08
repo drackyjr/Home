@@ -1,0 +1,92 @@
+﻿def display_frames(frames):
+    print("Frames: ", end="")
+    for frame in frames:
+        if frame != -1:
+            print(frame, end=" ")
+        else:
+            print("Empty", end=" ")
+    print()
+
+
+def fifo(pages, frame_size):
+    frames = [-1] * frame_size
+    pointer = 0
+    page_faults = 0
+
+
+    for page in pages:
+        if page not in frames:
+            frames[pointer] = page
+            pointer = (pointer + 1) % frame_size
+            page_faults += 1
+            display_frames(frames)
+        else:
+            display_frames(frames)
+
+
+    print(f"Total Page Faults (FIFO): {page_faults}")
+
+
+def lru(pages, frame_size):
+    frames = [-1] * frame_size
+    last_used = [0] * frame_size
+    page_faults = 0
+
+
+    for i, page in enumerate(pages):
+        if page in frames:
+            last_used[frames.index(page)] = i + 1
+            display_frames(frames)
+        else:
+            if -1 in frames:
+                empty_index = frames.index(-1)
+                frames[empty_index] = page
+                last_used[empty_index] = i + 1
+            else:
+                lru_index = last_used.index(min(last_used))
+                frames[lru_index] = page
+                last_used[lru_index] = i + 1
+            page_faults += 1
+            display_frames(frames)
+
+
+    print(f"Total Page Faults (LRU): {page_faults}")
+
+
+def main():
+    while True:
+        print("\nChoose a Page Replacement Algorithm:")
+        print("1. LRU\n2. FIFO\n3. Exit")
+        choice = int(input("Enter your choice: "))
+
+
+        if choice == 3:
+            print("Exiting program.")
+            break
+
+
+        frame_size = int(input("Enter the number of frames: "))
+        n = int(input("Enter the number of pages: "))
+        pages = list(map(int, input("Enter the page numbers: ").split()))
+
+
+________________
+
+
+        if choice == 1:
+            print("\nLRU Page Replacement")
+            lru(pages, frame_size)
+        elif choice == 2:
+            print("\nFIFO Page Replacement")
+            fifo(pages, frame_size)
+        else:
+            print("Invalid choice. Please try again.")
+
+
+        cont = input("Do you want to continue? (Y/N): ").strip().upper()
+        if cont != 'Y':
+            break
+
+
+if __name__ == "__main__":
+    main()

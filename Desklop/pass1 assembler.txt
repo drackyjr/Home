@@ -1,0 +1,104 @@
+﻿class Assembler:
+    def __init__(self):
+        self.symbol_table = {}
+        self.literal_table = {}
+        self.intermediate_code = []
+        self.location_counter = 0
+        self.literals = []
+       
+    def pass_one(self, source_code):
+        lines = source_code.splitlines()
+       
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith(';'):  # Skip empty lines and comments
+                continue
+           
+            # Split the line into tokens
+            tokens = line.split()
+            label = None
+            opcode = None
+            operand = None
+           
+            if len(tokens) == 3:  # Possible format: LABEL OPCODE OPERAND
+                label, opcode, operand = tokens
+            elif len(tokens) == 2:  # Possible format: OPCODE OPERAND
+                opcode, operand = tokens
+            elif len(tokens) == 1:  # Only opcode (e.g., STOP)
+                opcode = tokens[0]
+               
+            # Process Assembler Directives
+            if opcode == "START":
+                self.location_counter = int(operand)
+                self.intermediate_code.append((self.location_counter, opcode, operand))
+            elif opcode == "END":
+                self.intermediate_code.append((self.location_counter, opcode, operand))
+                break  # End processing
+            elif opcode == "LTORG":
+                # Process literals
+                for literal in self.literals:
+                    self.literal_table[literal] = self.location_counter
+                    self.location_counter += 1
+                self.literals.clear()  # Clear literals after processing
+            elif opcode in ("DC", "DS"):
+                if opcode == "DC":
+                    self.intermediate_code.append((self.location_counter, opcode, operand))
+                    self.location_counter += 1
+             elif opcode == "DS":
+                    self.intermediate_code.append((self.location_counter, opcode, operand))
+                    self.location_counter += int(operand)
+            else:  # Imperative statements
+                if '=' in operand:  # Literal handling (e.g., =’1’)
+                    literal = operand[operand.index('=') + 1:].strip("'")
+                    self.literals.append(literal)
+                    self.intermediate_code.append((self.location_counter, opcode, literal))
+                    self.location_counter += 1
+                else:
+                    self.intermediate_code.append((self.location_counter, opcode, operand))
+                    self.location_counter += 1
+
+
+            # Add label to symbol table if it exists
+            if label:
+                self.symbol_table[label] = self.location_counter
+
+
+    
+________________
+def print_tables(self):
+        print("Symbol Table:")
+        for label, address in self.symbol_table.items():
+            print(f"{label}: {address}")
+
+
+        print("\nLiteral Table:")
+        for literal, address in self.literal_table.items():
+            print(f"{literal}: {address}")
+
+
+        print("\nIntermediate Code:")
+        for loc, opcode, operand in self.intermediate_code:
+            print(f"{loc}: {opcode} {operand if operand else ''}")
+
+
+# Example usage
+source_code = """
+                START 1000
+                READ N
+                MOVER BREG, ='1'
+                MOVEM BREG, TERM
+AGAIN:        MULT BREG, TERM
+                MOVER CREG, TERM
+                MOVEM B, RESULT
+                LTORG
+                STOP
+N            DS      5
+RESULT       DC      20
+TERM         DC      1
+                END
+"""
+
+
+assembler = Assembler()
+assembler.pass_one(source_code)
+assembler.print_tables()

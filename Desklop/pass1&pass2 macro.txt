@@ -1,0 +1,105 @@
+﻿class MacroProcessor:
+    def __init__(self):
+        self.mnt = []  # Macro Name Table
+        self.mdt = []  # Macro Definition Table
+        self.intermediate_code = []  # Intermediate code without macro definitions
+        self.macro_definitions = {}  # To hold macro definitions temporarily
+        self.location_counter = 0  # For tracking locations if needed
+
+
+    def pass_one(self, source_code):
+        lines = source_code.splitlines()
+        in_macro = False
+        current_macro = None
+        current_macro_body = []
+
+
+        for line in lines:
+            line = line.strip()
+            if not line or line.startswith(';'):  # Skip empty lines and comments
+                continue
+
+
+            tokens = line.split()
+            if tokens[0] == "MACRO":
+                in_macro = True
+                current_macro = tokens[1]
+                current_macro_body = []  # Reset current macro body
+            elif tokens[0] == "ENDM":
+                in_macro = False
+                self.mnt.append((current_macro, len(self.mdt)))  # Add to MNT
+                self.mdt.append(current_macro_body)  # Add macro body to MDT
+                current_macro = None
+            elif in_macro:
+                current_macro_body.append(line)  # Collect macro body
+            else:
+                # Normal code (not a macro)
+                self.intermediate_code.append(line)
+
+
+    def pass_two(self):
+        final_code = []
+
+
+        for line in self.intermediate_code:
+            tokens = line.split()
+            if tokens[0] in [macro[0] for macro in self.mnt]:  # Check if it's a macro call
+                macro_index = next(i for i, macro in enumerate(self.mnt) if macro[0] == tokens[0])
+                macro_body = self.mdt[macro_index][1:]  # Get macro body
+                final_code.extend(macro_body)  # Expand macro body
+            else:
+                final_code.append(line)  # Non-macro line
+
+
+        return final_code
+
+
+    def print_tables(self):
+        print("Macro Name Table (MNT):")
+        for name, mdt_index in self.mnt:
+            print(f"{name}: {mdt_index}")
+
+
+        print("\nMacro Definition Table (MDT):")
+        for index, body in enumerate(self.mdt):
+            print(f"MDT Entry {index}:")
+            for line in body:
+                print(f"  {line}")
+
+
+        print("\nIntermediate Code (without macros):")
+        for line in self.intermediate_code:
+            print(line)
+
+
+________________
+
+
+# Example usage
+source_code = """
+                MACRO ADD
+                LOAD A
+                ADD B
+                STORE C
+                ENDM
+                MACRO SUB
+                LOAD A
+                SUB B
+                STORE D
+                ENDM
+                LOAD A
+                ADD
+                LOAD A
+                SUB
+"""
+
+
+macro_processor = MacroProcessor()
+macro_processor.pass_one(source_code)
+macro_processor.print_tables()
+
+
+final_code = macro_processor.pass_two()
+print("\nFinal Code after Macro Expansion:")
+for line in final_code:
+    print(line)

@@ -1,0 +1,79 @@
+﻿import threading
+import time
+import random
+
+
+# Initialize mutex and wsem as threading Locks
+x = threading.Lock()       # Mutex for read count
+wsem = threading.Lock()    # Mutex for writers to control access to shared resource
+readcount = 0              # Number of active readers
+
+
+# Reader function
+def reader():
+    global readcount
+    wait_time = random.randint(1, 5)
+   
+    print("Reader trying to enter")
+   
+    # Entry section for reader
+    x.acquire()  # Lock to update readcount
+    readcount += 1
+    if readcount == 1:
+        wsem.acquire()  # First reader locks wsem
+    print(f"{readcount} reader(s) inside")
+    x.release()  # Release lock after updating readcount
+   
+    # Critical section for reader
+    time.sleep(wait_time)  # Simulate reading time
+   
+    # Exit section for reader
+    x.acquire()
+    readcount -= 1
+    if readcount == 0:
+        wsem.release()  # Last reader unlocks wsem
+    x.release()
+   
+    print("Reader leaving")
+
+
+# Writer function
+def writer():
+    wait_time = random.randint(1, 3)
+   
+    print("Writer is trying to enter")
+    wsem.acquire()  # Writer locks wsem to get access to resource
+    print("Writer inside")
+   
+    # Critical section for writer
+    time.sleep(wait_time)  # Simulate writing time
+   
+    # Exit section for writer
+    wsem.release()
+    print("Writer leaving")
+
+
+def main():
+    n1 = int(input("Enter the number of readers: "))
+    n2 = int(input("Enter the number of writers: "))
+
+
+    reader_threads = [threading.Thread(target=reader) for _ in range(n1)]    # Create reader threads
+
+
+    writer_threads = [threading.Thread(target=writer) for _ in range(n2)]    # Create writer threads
+
+
+    for thread in reader_threads:    # Start all reader threads
+        thread.start()
+
+
+    for thread in writer_threads:    # Start all writer threads
+        thread.start()
+
+
+    time.sleep(30)    # Wait for a while to allow threads to execute
+
+
+if __name__ == "__main__":
+    main()

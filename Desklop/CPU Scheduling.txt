@@ -1,0 +1,146 @@
+﻿import queue
+
+
+class Process:
+    def __init__(self, id, arrival_time, burst_time, priority):
+        self.id = id
+        self.arrival_time = arrival_time
+        self.burst_time = burst_time
+        self.remaining_time = burst_time
+        self.priority = priority
+        self.waiting_time = 0
+        self.turnaround_time = 0
+        self.completion_time = 0
+
+
+def fcfs(processes):
+    current_time = 0
+    processes.sort(key=lambda x: x.arrival_time)
+    for p in processes:
+        if current_time < p.arrival_time:
+            current_time = p.arrival_time
+        p.waiting_time = current_time - p.arrival_time
+        current_time += p.burst_time
+        p.turnaround_time = p.waiting_time + p.burst_time
+        p.completion_time = current_time
+    print_results(processes, "FCFS")
+
+
+def sjf_preemptive(processes):
+    current_time = 0
+    completed = 0
+    pq = queue.PriorityQueue()
+    processes.sort(key=lambda x: x.arrival_time)
+    while completed < len(processes):
+        for p in processes:
+            if p.arrival_time <= current_time and p.remaining_time > 0:
+                pq.put((p.remaining_time, p))
+        if not pq.empty():
+            remaining_time, current = pq.get()
+            current.remaining_time -= 1
+            current_time += 1
+            if current.remaining_time == 0:
+                completed += 1
+                current.completion_time = current_time
+                current.turnaround_time = current.completion_time - current.arrival_time
+                current.waiting_time = current.turnaround_time - current.burst_time
+        else:
+            current_time += 1
+    print_results(processes, "SJF (Preemptive)")
+
+
+def priority_non_preemptive(processes):
+    current_time = 0
+    completed = 0
+    pq = queue.PriorityQueue()
+    processes.sort(key=lambda x: x.arrival_time)
+    while completed < len(processes):
+        for p in processes:
+            if p.arrival_time <= current_time and p.remaining_time > 0:
+                pq.put((p.priority, p))
+        if not pq.empty():
+            _, current = pq.get()
+            current.waiting_time = current_time - current.arrival_time
+            current_time += current.burst_time
+            current.turnaround_time = current.waiting_time + current.burst_time
+            current.completion_time = current_time
+            current.remaining_time = 0
+            completed += 1
+        else:
+            current_time += 1
+    print_results(processes, "Priority (Non-preemptive)")
+
+
+________________
+
+
+def round_robin(processes, quantum):
+    current_time = 0
+    completed = 0
+    queue = []
+    processes.sort(key=lambda x: x.arrival_time)
+    i = 0
+    while completed < len(processes):
+        while i < len(processes) and processes[i].arrival_time <= current_time:
+            queue.append(processes[i])
+            i += 1
+        if queue:
+            current = queue.pop(0)
+            exec_time = min(current.remaining_time, quantum)
+            current.remaining_time -= exec_time
+            current_time += exec_time
+            if current.remaining_time == 0:
+                completed += 1
+                current.completion_time = current_time
+                current.turnaround_time = current.completion_time - current.arrival_time
+                current.waiting_time = current.turnaround_time - current.burst_time
+            else:
+                queue.append(current)
+        else:
+            current_time += 1
+    print_results(processes, "Round Robin")
+
+
+def print_results(processes, algorithm):
+    print(f"\n{algorithm} Scheduling Results:")
+    print("Process ID\tArrival Time\tBurst Time\tPriority\tCompletion Time\tTurnaround Time\tWaiting Time")
+    total_waiting_time = 0
+    total_turnaround_time = 0
+    for p in processes:
+        total_waiting_time += p.waiting_time
+        total_turnaround_time += p.turnaround_time
+        print(f"{p.id}\t\t{p.arrival_time}\t\t{p.burst_time}\t\t{p.priority}\t\t{p.completion_time}\t\t{p.turnaround_time}\t\t{p.waiting_time}")
+    print(f"Average Waiting Time: {total_waiting_time / len(processes):.2f}")
+    print(f"Average Turnaround Time: {total_turnaround_time / len(processes):.2f}")
+
+
+def main():
+    n = int(input("Enter number of processes: "))
+    processes = []
+    for i in range(n):
+        arrival_time = int(input(f"Enter arrival time for Process {i+1}: "))
+        burst_time = int(input(f"Enter burst time for Process {i+1}: "))
+        priority = int(input(f"Enter priority (for Priority Scheduling) for Process {i+1}: "))
+        processes.append(Process(i + 1, arrival_time, burst_time, priority))
+
+
+    print("Choose a CPU Scheduling Algorithm:")
+    print("1. FCFS\n2. SJF (Preemptive)\n3. Priority (Non-preemptive)\n4. Round Robin (Preemptive)")
+    choice = int(input("Enter your choice: "))
+
+
+    if choice == 1:
+        fcfs(processes)
+    elif choice == 2:
+        sjf_preemptive(processes)
+    elif choice == 3:
+        priority_non_preemptive(processes)
+    elif choice == 4:
+        quantum = int(input("Enter time quantum for Round Robin: "))
+        round_robin(processes, quantum)
+    else:
+        print("Invalid choice.")
+
+
+if __name__ == "__main__":
+    main()

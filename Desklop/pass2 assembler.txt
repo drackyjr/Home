@@ -1,0 +1,73 @@
+﻿class PassTwoAssembler:
+    def __init__(self, intermediate_code, symbol_table, literal_table):
+        self.intermediate_code = intermediate_code
+        self.symbol_table = symbol_table
+        self.literal_table = literal_table
+        self.machine_code = []
+
+
+    def pass_two(self):
+        for loc, opcode, operand in self.intermediate_code:
+            if opcode == "START":
+                # Handle START directive (could be omitted in final output)
+                continue
+            elif opcode == "END":
+                # Handle END directive (could be omitted in final output)
+                continue
+            elif opcode in ("DC", "DS"):
+                # These directives don't translate to machine code directly
+                continue
+            else:
+                # Resolve operands
+                if operand and operand.startswith('='):
+                    # Literal
+                    literal = operand[1:].strip("'")
+                    address = self.literal_table.get(literal, None)
+                    if address is not None:
+                        operand = str(address)
+                elif operand in self.symbol_table:
+                    # Label
+                    operand = str(self.symbol_table[operand])
+
+
+                # Generate machine code line
+                machine_instruction = f"{loc:04d} {opcode} {operand if operand else ''}"
+                self.machine_code.append(machine_instruction)
+
+
+    def print_machine_code(self):
+        print("Final Machine Code:")
+        for instruction in self.machine_code:
+            print(instruction)
+
+
+# Example usage with input from Pass-I
+intermediate_code = [
+    (1000, "START", "1000"),
+    (1000, "READ", "N"),
+    (1001, "MOVER", "=1"),
+    (1002, "MOVEM", "TERM"),
+    (1003, "MULT", "TERM"),
+    (1004, "MOVER", "TERM"),
+    (1005, "MOVEM", "RESULT"),
+    (1006, "LTORG", ""),
+    (1007, "STOP", ""),
+]
+
+
+symbol_table = {
+    "N": 1000,
+    "AGAIN": 1003,
+    "RESULT": 1007,
+    "TERM": 1006,
+}
+
+
+literal_table = {
+    "1": 1008,
+}
+
+
+pass_two_assembler = PassTwoAssembler(intermediate_code, symbol_table, literal_table)
+pass_two_assembler.pass_two()
+pass_two_assembler.print_machine_code()
